@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  sas-dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sas-dashboard
+    restart: unless-stopped
+    ports:
+      - "7770:7770"
+    environment:
+      - NODE_ENV=production
+      - PORT=7770
+      - HOSTNAME=0.0.0.0
+    volumes:
+      # Mount Docker socket for container monitoring
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Mount system info (optional, for real metrics)
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /etc:/host/etc:ro
+    networks:
+      - sas-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.sas-dashboard.rule=Host(`sas.rdktech.us`)"
+      - "traefik.http.routers.sas-dashboard.entrypoints=websecure"
+      - "traefik.http.routers.sas-dashboard.tls.certresolver=myresolver"
+      - "traefik.http.services.sas-dashboard.loadbalancer.server.port=7770"
+
+networks:
+  sas-network:
+    driver: bridge
